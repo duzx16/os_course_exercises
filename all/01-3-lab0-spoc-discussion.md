@@ -17,14 +17,19 @@
 ## 思考题
 
 - 你理解的对于类似ucore这样需要进程/虚存/文件系统的操作系统，在硬件设计上至少需要有哪些直接的支持？至少应该提供哪些功能的特权指令？
+  需要支持异常、虚拟内存（MMU）、特权模式，并且提供相应的特权指令。
 
 - 你理解的x86的实模式和保护模式有什么区别？物理地址、线性地址、逻辑地址的含义分别是什么？
+  实模式下最大只能访问1M的内存空间，并且所有指令都可以执行。保护模式下最大可以访问4G的内存空间，并且特权指令只能在特定的特权集执行。
 
 - 你理解的risc-v的特权模式有什么区别？不同 模式在地址访问方面有何特征？
+  RISC-V定义了四种特权模式，但是具体实现的时候不同的机器可以只实现一部分。另外RISC-V的特权模式控制的不是可以执行的指令，而是可以访问的CSR寄存器。
 
 - 理解ucore中list_entry双向链表数据结构及其4个基本操作函数和ucore中一些基于它的代码实现（此题不用填写内容）
 
 - 对于如下的代码段，请说明":"后面的数字是什么含义
+
+  表示对应的域的比特数
 ```
  /* Gate descriptors for interrupts and traps */
  struct gatedesc {
@@ -62,18 +67,66 @@ intr=8;
 SETGATE(intr, 1,2,3,0);
 ```
 请问执行上述指令后， intr的值是多少？
-
+131075
 ### 课堂实践练习
 
 #### 练习一
 
 1. 请在ucore中找一段你认为难度适当的AT&T格式X86汇编代码，尝试解释其含义。
 
+   ```
+   movl %cr0, %eax
+   orl $CR0_PE_ON, %eax
+   movl %eax, %cr0
+   ```
+
+   含义是将cr0寄存器与CR0_PE_ON做或操作，然后赋给cr0寄存器。因为CR0_PE_ON是0x1，所以就是将eax的最低位设为1。
+
+
 2. (option)请在rcore中找一段你认为难度适当的RV汇编代码，尝试解释其含义。
 
 #### 练习二
 
 宏定义和引用在内核代码中很常用。请枚举ucore或rcore中宏定义的用途，并举例描述其含义。
+
+1.将宏定义当做内联函数来使用
+
+```
+#define SETGATE(gate, istrap, sel, off, dpl) {            \
+    (gate).gd_off_15_0 = (uint32_t)(off) & 0xffff;        \
+    (gate).gd_ss = (sel);                                \
+    (gate).gd_args = 0;                                    \
+    (gate).gd_rsv1 = 0;                                    \
+    (gate).gd_type = (istrap) ? STS_TG32 : STS_IG32;    \
+    (gate).gd_s = 0;                                    \
+    (gate).gd_dpl = (dpl);                                \
+    (gate).gd_p = 1;                                    \
+    (gate).gd_off_31_16 = (uint32_t)(off) >> 16;        \
+}
+```
+
+实例代码是对IDT表的表项进行设置
+
+2.用宏定义来防止重复include头文件
+
+```
+#ifndef __KERN_MM_MMU_H__
+#define __KERN_MM_MMU_H__
+#endif /* !__KERN_MM_MMU_H__ */
+```
+
+3.用宏定义来定义常量
+
+```
+/* global segment number */
+#define SEG_KTEXT    1
+#define SEG_KDATA    2
+#define SEG_UTEXT    3
+#define SEG_UDATA    4
+#define SEG_TSS      5
+```
+
+
 
 #### reference
  - [Intel格式和AT&T格式汇编区别](http://www.cnblogs.com/hdk1993/p/4820353.html)

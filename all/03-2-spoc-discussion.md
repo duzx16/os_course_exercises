@@ -13,11 +13,17 @@ NOTICE
 ### 6.1	非连续内存分配的需求背景
  1. 为什么要设计非连续内存分配机制？
 
+    因为连续内存分配容易引入内存碎片，对内存的利用率较低。
+
 
  1. 非连续内存分配中内存分块大小有哪些可能的选择？大小与大小是否可变?
 
+    可以选择内存块的大小不变，就是页式内存管理，也可以选择内存块的大小可变，就是段式内存管理。
+
 
  1. 为什么在大块时要设计大小可变，而在小块时要设计成固定大小？小块时的固定大小可以提供多种选择吗？
+
+    因为如果小块的内存可变的话，将不得不在页表中存储每个块的长度，会加大负担。而且寻找可用空间也会变得更复杂。
 
 ### 6.2	段式存储管理
  1. 什么是段、段基址和段内偏移？
@@ -55,12 +61,16 @@ NOTICE
 ## 个人思考题
 （1） (w3l2) 请简要分析64bit CPU体系结构下的分页机制是如何实现的
 
-
+x64的虚拟地址空间只有48位。为了翻译48位的线性地址，一共有4级页表。每级页表有512项。支持三种页大小：4K(使用全部的四级页表)，2M(只使用三级页表)，1G(使用两级页表)。各级页表的联系和x86类似。
 
 ## 小组思考题
 （1）(spoc) 某系统使用请求分页存储管理，若页在内存中，满足一个内存请求需要150ns (10^-9s)。若缺页率是10%，为使有效访问时间达到0.5us(10^-6s),求不在内存的页面的平均访问时间。请给出计算步骤。
 
+设不在内存的页面的平均访问时间为x ns
 
+0.1x+0.9*150 = 500
+
+x = 3650
 
 （2）(spoc) 有一台假想的计算机，页大小（page size）为32 Bytes，支持32KB的虚拟地址空间（virtual address space）,有4KB的物理内存空间（physical memory），采用二级页表，一个页目录项（page directory entry ，PDE）大小为1 Byte,一个页表项（page-table entries
 PTEs）大小为1 Byte，1个页目录表大小为32 Bytes，1个页表大小为32 Bytes。页目录基址寄存器（page directory base register，PDBR）保存了页目录表的物理地址（按页对齐）。
@@ -80,9 +90,10 @@ PFN6..0:页帧号
 PT6..0:页表的物理基址>>5
 ```
 在[物理内存模拟数据文件](./03-2-spoc-testdata.md)中，给出了4KB物理内存空间的值，请回答下列虚地址是否有合法对应的物理内存，请给出对应的pde index, pde contents, pte index, pte contents。
+
 ```
 1) Virtual Address 6c74
-   Virtual Address 6b22
+   Virtual Address 110101100100010
 2) Virtual Address 03df
    Virtual Address 69dc
 3) Virtual Address 317a
@@ -93,7 +104,27 @@ PT6..0:页表的物理基址>>5
    Virtual Address 748b
 ```
 
+```
+virtual address 110110001110100:
+	--> pde index: 0x1b pde contents:(valid 1, pfn 0x20)
+		--> pte index: 0x3 pte contents:(valid 1, pfn 0x61)
+  		--> Translates to Physical Address 0xc34 --> Value: 06
+virtual address 110101100100010:
+	--> pde index: 0x1a pde contents:(valid 1, pfn 0x52)
+		--> pte index: 0x19 pte contents:(valid 1, pfn 0x47)
+			--> Translates to Physical Address 0x8e2 --> Value: 1a
+virtual address 000001111011111:
+	--> pde index: 0x00 pde contents:(valid 1, pfn 0x5a)
+		--> pte index: 0x1e pte contents:(valid 1, pfn 0x5)
+			--> Translates to Physical Address 0xbf --> Value: 0f
+virtual addess 110100111011100:
+	--> pde index: 0x1a pde contents:(valid 1, pfn 0x52)
+		--> pte index: 0xe pte contents:(valid 0, pfn 0x7f)
+			--> Fault (page table entry not valid)
+```
+
 比如答案可以如下表示： (注意：下面的结果是错的，你需要关注的是如何表示)
+
 ```
 Virtual Address 7570:
   --> pde index:0x1d  pde contents:(valid 1, pfn 0x33)
@@ -137,5 +168,5 @@ Virtual Address 7268:
  - 用C89, Python, Java, Javascript这4种语言实现了该CPU的模拟器；
  - 支持交叉编译；
  - 所有这些只依赖标准C库。
- 
+
 针对op-cpu的特征描述，请同学们通过代码阅读和执行对自己有兴趣的部分进行分析，给出你的分析结果和评价。

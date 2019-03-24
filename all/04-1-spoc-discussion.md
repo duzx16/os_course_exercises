@@ -43,8 +43,6 @@ re_os_lab, v9_cpu, os_course_spoc_exercises 　in github repos。这样可以在
 
 2. 如何提高程序执行时的局部性特征？
 
-
-
 3. 排序算法的局部性特征？
   * 参考：[九大排序算法再总结](http://blog.csdn.net/xiazdong/article/details/8462393)
 
@@ -61,8 +59,9 @@ re_os_lab, v9_cpu, os_course_spoc_exercises 　in github repos。这样可以在
 
  1. 为了支持虚拟页式存储的实现，页表项有什么修改？
 
+    需要增加表示页是否在内存中、页是否被访问和页是否被修改的位。
 
- 2. 页式存储和虚拟页式存储的区别是什么？
+ 1. 页式存储和虚拟页式存储的区别是什么？
 
 ### 8.6 缺页异常
 
@@ -97,6 +96,8 @@ gcc -O0 -o goodlocality goodlocality.c
 time ./goodlocality
 ```
 可以看到其执行时间。
+
+按照代码中的写法用时0.024s，而如果改成A\[j\]\[i\]=i+j则需要0.142s。
 
 ## 小组思考题目
 ----
@@ -145,6 +146,8 @@ PT6..0:页表的物理基址>>5
 ```
 
 请写出一个translation程序（可基于rust、python、ruby、C、C++、LISP、JavaScript等），输入是一个虚拟地址，依据[物理内存模拟数据文件](./04-1-spoc-memdiskdata.md)自动计算出对应的pde index, pde contents, pte index, pte contents，the value of addr in phy page OR disk sector。
+
+代码见04-01-spoc-discussion.py
 
 **提示:**
 ```
